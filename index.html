@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>treemap</title>
+  <style>
+    text {
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>大田区の保育施設</h1>
+  <svg width="800" height="600"></svg>
+
+
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script>
+  // 1. 描画用のデータ準備
+  var width = document.querySelector("svg").clientWidth;
+  var height = document.querySelector("svg").clientHeight;
+
+  var data = {
+    "name": "大田区",
+    "children": [
+      {
+        "name": "京浜東北・根岸線",
+        "children": [
+          { "name": "大森", "value": 26 },
+          { "name": "蒲田", "value": 50 },
+        ]
+      },
+      {
+        "name": "湘南新宿ライン",
+        "children": [
+          { "name": "西大井", "value": 10 },
+        ]
+      },
+      {
+        "name": "東急東横線",
+        "children": [
+          { "name": "自由が丘", "value": 2 },
+          { "name": "田園調布", "value": 8 },
+          { "name": "多摩川", "value": 11 },
+          { "name": "新丸子", "value": 5 },
+        ]
+      },
+      {
+        "name": "東急目黒線",
+        "children": [
+          { "name": "西小山", "value": 3 },
+          { "name": "洗足", "value": 15 },
+          { "name": "大岡山", "value": 18 },
+          { "name": "奥沢", "value": 11 },
+        ]
+      },
+      {
+        "name": "東急大井町線",
+        "children": [
+          { "name": "戸越公園", "value": 1 },
+          { "name": "中延", "value": 15 },
+          { "name": "荏原町", "value": 23 },
+          { "name": "旗の台", "value": 25 },
+          { "name": "北洗足", "value": 21 },
+          { "name": "緑が丘", "value": 14 },
+          { "name": "九品仏", "value": 1 },
+        ]
+      },
+      {
+        "name": "東急多摩川線",
+        "children": [
+          { "name": "沼部", "value": 26 },
+          { "name": "鵜の木", "value": 30 },
+          { "name": "下丸子", "value": 33 },
+          { "name": "武蔵新田", "value": 40 },
+          { "name": "矢口渡", "value": 45 },
+        ]
+      },
+      {
+        "name": "東急池上線",
+        "children": [
+          { "name": "荏原中延", "value": 2 },
+          { "name": "長原", "value": 28 },
+          { "name": "洗足池", "value": 31 },
+          { "name": "石川台", "value": 37 },
+          { "name": "雪が谷大塚", "value": 29 },
+          { "name": "御嶽山", "value": 37 },
+          { "name": "久が原", "value": 42 },
+          { "name": "千鳥町", "value": 42 },
+          { "name": "池上", "value": 45 },
+          { "name": "蓮沼", "value": 48 },
+        ]
+      },
+      {
+        "name": "都営浅草線",
+        "children": [
+          { "name": "西馬込", "value": 44 },
+          { "name": "馬込", "value": 33 },
+        ]
+      },
+      {
+        "name": "京急本線",
+        "children": [
+          { "name": "立会川", "value": 4 },
+          { "name": "大森海岸", "value": 22 },
+          { "name": "平和島", "value": 33 },
+          { "name": "大森町", "value": 39 },
+          { "name": "梅屋敷", "value": 42 },
+          { "name": "京急蒲田", "value": 49 },
+          { "name": "雑色", "value": 33 },
+          { "name": "六郷土手", "value": 14 },
+        ]
+      },
+      {
+        "name": "京急空港線",
+        "children": [
+          { "name": "糀谷", "value": 33 },
+          { "name": "大鳥居", "value": 19 },
+          { "name": "穴守稲荷", "value": 11 },
+          { "name": "天空橋", "value": 5 },
+        ]
+      },
+    ]
+  }
+
+  // 2. 描画用のデータ変換
+  root = d3.hierarchy(data);
+  root
+    .sum(function(d) { return d.value; })
+    .sort(function(a, b) { return b.height - a.height || b.value - a.value; });
+
+  var treemap = d3.treemap()
+    .size([width, height])
+    .padding(1)
+    .round(true);
+
+  treemap(root);
+
+  // 3. svg要素の配置
+  var g = d3.select("svg")
+    .selectAll(".node")
+    .data(root.leaves())
+    .enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", function(d) { return "translate(" + d.x0 + "," + (d.y0) + ")"; });
+
+  g.append("rect")
+    .style("width", function(d) { return d.x1 - d.x0; })
+    .style("height", function(d) { return d.y1 - d.y0; })
+    .style("fill", function(d) {
+      while(d.depth > 1) d = d.parent;
+      return d3.schemeCategory10[parseInt(d.value % 7)];
+    })
+    .style("opacity", 0.6)
+
+  g.append("text")
+    .attr("text-anchor", "start")
+    .attr("x", 5)
+    .attr("dy", 30)
+    .attr("font-size", "150%")
+    .attr("class", "node-label")
+    .text(function(d) { return d.data.name + " : " + d.value; });
+  </script>
+</body>
+</html>
